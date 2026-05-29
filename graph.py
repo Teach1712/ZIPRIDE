@@ -7,37 +7,19 @@ import numpy as np
 INF = 999999
 MAX_VERTICES = 20
 
-
 class Edge:
     def __init__(self, dest, weight):
         self.dest = dest
         self.weight = weight
-
 
 class Vertex:
     def __init__(self, name):
         self.name = name
         self.edges = []
         self.edge_count = 0
-
     def add_edge(self, edge):
         self.edges.append(edge)
         self.edge_count += 1
-
-
-class Queue:
-    def __init__(self):
-        self.items = []
-
-    def enqueue(self, item):
-        self.items.append(item)
-
-    def dequeue(self):
-        return self.items.pop(0)
-
-    def is_empty(self):
-        return len(self.items) == 0
-
 
 class Graph:
     def __init__(self):
@@ -65,13 +47,10 @@ class Graph:
         if weight < 0:
             print("Negative weight rejected")
             return
-
         self.add_location(src)
         self.add_location(dest)
-
         src_vertex = self.find_vertex(src)
         dest_vertex = self.find_vertex(dest)
-
         src_vertex.add_edge(Edge(dest, weight))
         dest_vertex.add_edge(Edge(src, weight))
 
@@ -84,29 +63,31 @@ class Graph:
                 print(" ->", e.dest, "(" + str(e.weight) + ")")
 
     def bfs(self, start):
-        print("\nBFS Traversal:")
+        print("\nBFS Traversal (with levels):")
         visited = {v.name: False for v in self.vertices}
-        queue = Queue()
-
+        queue = [(start, 0)]
         visited[start] = True
-        queue.enqueue(start)
-
-        while not queue.is_empty():
-            node = queue.dequeue()
-            print(node, end=" ")
+        current_level = 0
+        level_nodes = []
+        while queue:
+            node, level = queue.pop(0)
+            if level != current_level:
+                print(f"Level {current_level}: {' '.join(level_nodes)}")
+                level_nodes = []
+                current_level = level
+            level_nodes.append(node)
             vertex = self.find_vertex(node)
             for e in vertex.edges:
                 if not visited[e.dest]:
                     visited[e.dest] = True
-                    queue.enqueue(e.dest)
-        print()
+                    queue.append((e.dest, level + 1))
+        print(f"Level {current_level}: {' '.join(level_nodes)}")
 
     def dfs_cycle(self, start):
         print("\nDFS Cycle Detection:")
         visited = {v.name: False for v in self.vertices}
         stack = []
         parent = {}
-
         def dfs(node):
             visited[node] = True
             stack.append(node)
@@ -121,7 +102,6 @@ class Graph:
                     return True
             stack.pop()
             return False
-
         if not dfs(start):
             print("No cycle detected.")
 
@@ -131,12 +111,10 @@ class Graph:
         if start_index == -1 or end_index == -1:
             print("Invalid location")
             return INF
-
         distances = {v.name: INF for v in self.vertices}
         previous = {v.name: None for v in self.vertices}
         distances[start] = 0
         visited = set()
-
         while len(visited) < self.vertex_count:
             current = min((v for v in self.vertices if v.name not in visited),
                           key=lambda v: distances[v.name], default=None)
@@ -148,14 +126,11 @@ class Graph:
                 if new_dist < distances[e.dest]:
                     distances[e.dest] = new_dist
                     previous[e.dest] = current.name
-
-        # reconstruct path
         path = []
         node = end
         while node:
             path.insert(0, node)
             node = previous[node]
-
         print("\nDijkstra Shortest Path:")
         print("Source:", start)
         print("Destination:", end)
