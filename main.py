@@ -1,6 +1,5 @@
 # =========================================================
-# main.py (fixed)
-# MENU DRIVEN ZIPRIDE SYSTEM
+# main.py (final integrated version)
 # =========================================================
 
 from graph import Graph
