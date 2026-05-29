@@ -6,20 +6,27 @@ import numpy as np
 
 MAX_HEAP = 100
 
-
+# =========================================================
+# PICKUP REQUEST CLASS
+# =========================================================
 class PickupRequest:
     def __init__(self, passenger, driver, travel_time):
         self.passenger = passenger
         self.driver = driver
-        # Correct priority formula
+        # Correct priority formula: (6 - M) + 1000/T
         self.priority = (6 - passenger.membership_tier) + (1000 / travel_time if travel_time > 0 else 0)
 
-
+# =========================================================
+# MAX HEAP CLASS
+# =========================================================
 class MaxHeap:
     def __init__(self):
         self.heap = [None] * MAX_HEAP
         self.size = 0
 
+    # =====================================================
+    # INSERT
+    # =====================================================
     def insert(self, request):
         if request is None:
             print("Invalid request: cannot insert")
@@ -40,6 +47,9 @@ class MaxHeap:
         self.size += 1
         self.print_heap()  # print after every insert
 
+    # =====================================================
+    # EXTRACT MAX
+    # =====================================================
     def extract_max(self):
         if self.size == 0:
             print("Heap Empty")
@@ -71,9 +81,15 @@ class MaxHeap:
         self.print_heap()  # print after every extraction
         return root
 
+    # =====================================================
+    # PEEK
+    # =====================================================
     def peek(self):
         return None if self.size == 0 else self.heap[0]
 
+    # =====================================================
+    # PRINT HEAP
+    # =====================================================
     def print_heap(self):
         print("\nHeap State:")
         if self.size == 0:
