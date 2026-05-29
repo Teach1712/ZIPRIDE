@@ -14,7 +14,7 @@ from sorting import benchmark
 def run_graph_module():
     graph = Graph()
 
-    # Add ≥8 nodes and ≥10 edges
+    # Add ≥8 nodes and ≥10 edges, plus Daycare and isolated node
     graph.add_road("CBD", "Airport", 15)
     graph.add_road("Airport", "IndustrialPark", 20)
     graph.add_road("CBD", "University", 10)
@@ -24,6 +24,7 @@ def run_graph_module():
     graph.add_road("CBD", "Stadium", 18)
     graph.add_road("Stadium", "Hospital", 14)
     graph.add_road("University", "Library", 5)
+    graph.add_road("ShoppingMall", "Daycare", 7)
     graph.add_location("IsolatedPark")  # isolated node
 
     graph.print_graph()
@@ -40,21 +41,20 @@ def run_hash_module():
 
     print("\n===== MODULE 2: HASH TABLE LOOKUP =====")
 
-    # Insert passengers (20 records)
+    # Insert passengers
     for i in range(20):
         passenger = Passenger(101 + i, f"Passenger{i}", "CBD", (i % 5) + 1)
         passenger_table.insert(passenger)
 
-    # Demonstrate collision explicitly
+    # Collision demo
     p1 = Passenger(101, "CollisionA", "CBD", 2)
     p2 = Passenger(154, "CollisionB", "CBD", 3)  # same bucket as 101
     passenger_table.insert(p1)
     passenger_table.insert(p2)
-    passenger_table.print_chain(101 % 53)
 
     # Search hit and miss
-    passenger_table.search(101)   # hit
-    passenger_table.search(9999)  # miss
+    passenger_table.search(101)
+    passenger_table.search(9999)
 
     # Deletion followed by search
     passenger_table.delete(101)
@@ -65,8 +65,12 @@ def run_hash_module():
         driver = Driver(201 + i, f"Driver{i}", "Airport", "Available")
         driver_table.insert(driver)
 
-    driver_table.search(201)   # hit
-    driver_table.search(9999)  # miss
+    driver_table.search(201)
+    driver_table.search(9999)
+
+    # Driver deletion demo
+    driver_table.delete(201)
+    driver_table.search(201)
 
     print("\n===== HASH TABLE MODULE COMPLETE =====")
 
@@ -78,10 +82,12 @@ def run_heap_module():
     graph = Graph()
     graph.add_road("CBD", "Airport", 15)
     graph.add_road("Airport", "IndustrialPark", 20)
+    graph.add_road("CBD", "Hospital", 25)
 
     print("\n===== MODULE 3: HEAP PICKUP SCHEDULING =====")
 
-    for i in range(5):
+    # Insert 10 requests
+    for i in range(10):
         passenger = Passenger(301 + i, f"Passenger{i}", "CBD", (i % 5) + 1)
         driver = Driver(401 + i, f"Driver{i}", "Airport", "Available")
         travel_time = graph.dijkstra(passenger.pickup_location, driver.current_location)
@@ -89,12 +95,32 @@ def run_heap_module():
         heap.insert(request)
         print(f"\nInserted Passenger: {passenger.passenger_id}")
 
+    # Driver comparison demo
+    passenger = Passenger(999, "PassengerX", "CBD", 2)
+    drivers = [
+        Driver(601, "DriverA", "Airport", "Available"),
+        Driver(602, "DriverB", "Hospital", "Available"),
+        Driver(603, "DriverC", "IndustrialPark", "Available")
+    ]
+    best_driver = None
+    best_time = float('inf')
+    for d in drivers:
+        travel_time = graph.dijkstra(passenger.pickup_location, d.current_location)
+        print(f"Driver {d.driver_id} travel time: {travel_time}")
+        if travel_time < best_time:
+            best_time = travel_time
+            best_driver = d
+    print(f"Best driver for Passenger {passenger.passenger_id}: Driver {best_driver.driver_id} with {best_time} minutes")
+    heap.insert(PickupRequest(passenger, best_driver, best_time))
+
+    # Peek
     top = heap.peek()
     if top:
         print(f"\nHighest Priority Passenger: {top.passenger.passenger_id}")
 
+    # Extract 5 requests
     print("\nExtracting Requests:")
-    for i in range(3):
+    for i in range(5):
         request = heap.extract_max()
         if request:
             print(f"Extracted Passenger: {request.passenger.passenger_id}")
