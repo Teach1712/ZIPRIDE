@@ -1,11 +1,8 @@
 # =========================================================
-# graph.py (fixed)
+# graph.py (clean version with requested changes)
 # =========================================================
 
-import numpy as np
-
 INF = 999999
-MAX_VERTICES = 20
 
 class Edge:
     def __init__(self, dest, weight):
@@ -16,32 +13,23 @@ class Vertex:
     def __init__(self, name):
         self.name = name
         self.edges = []
-        self.edge_count = 0
+
     def add_edge(self, edge):
         self.edges.append(edge)
-        self.edge_count += 1
 
 class Graph:
     def __init__(self):
         self.vertices = []
-        self.vertex_count = 0
 
     def add_location(self, name):
         if self.find_vertex(name) is None:
             self.vertices.append(Vertex(name))
-            self.vertex_count += 1
 
     def find_vertex(self, name):
         for v in self.vertices:
             if v.name == name:
                 return v
         return None
-
-    def get_index(self, name):
-        for i, v in enumerate(self.vertices):
-            if v.name == name:
-                return i
-        return -1
 
     def add_road(self, src, dest, weight):
         if weight < 0:
@@ -88,6 +76,7 @@ class Graph:
         visited = {v.name: False for v in self.vertices}
         stack = []
         parent = {}
+
         def dfs(node):
             visited[node] = True
             stack.append(node)
@@ -102,35 +91,35 @@ class Graph:
                     return True
             stack.pop()
             return False
+
         if not dfs(start):
             print("No cycle detected.")
 
     def dijkstra(self, start, end):
-        start_index = self.get_index(start)
-        end_index = self.get_index(end)
-        if start_index == -1 or end_index == -1:
-            print("Invalid location")
-            return INF
         distances = {v.name: INF for v in self.vertices}
         previous = {v.name: None for v in self.vertices}
         distances[start] = 0
-        visited = set()
-        while len(visited) < self.vertex_count:
-            current = min((v for v in self.vertices if v.name not in visited),
-                          key=lambda v: distances[v.name], default=None)
-            if current is None or distances[current.name] == INF:
-                break
-            visited.add(current.name)
-            for e in current.edges:
-                new_dist = distances[current.name] + e.weight
+        unvisited = [v.name for v in self.vertices]
+
+        while unvisited:
+            # Pick node with smallest distance
+            current = min(unvisited, key=lambda n: distances[n])
+            unvisited.remove(current)
+
+            vertex = self.find_vertex(current)
+            for e in vertex.edges:
+                new_dist = distances[current] + e.weight
                 if new_dist < distances[e.dest]:
                     distances[e.dest] = new_dist
-                    previous[e.dest] = current.name
+                    previous[e.dest] = current
+
+        # Build path
         path = []
         node = end
         while node:
             path.insert(0, node)
             node = previous[node]
+
         print("\nDijkstra Shortest Path:")
         print("Source:", start)
         print("Destination:", end)
