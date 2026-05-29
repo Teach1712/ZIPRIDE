@@ -51,6 +51,8 @@ def quick_sort(arr):
     return quick_sort(left) + middle + quick_sort(right)
 
 def benchmark():
+    np.random.seed(42)  # reproducible datasets
+
     print("\n===== MODULE 4: SORTING PICKUP RECORDS =====")
     print("\nSorting Field: EstimatedPickupTime T ascending")
 
@@ -81,9 +83,8 @@ def benchmark():
 
         # Nearly Sorted
         data = list(range(size))
-        # Introduce small disorder
         if size > 10:
-            data[5], data[6] = data[6], data[5]
+            data[5], data[6] = data[6], data[5]  # small disorder
         merge_ops = quick_ops = 0
         start = time.time(); merge_sort(data); merge_time = time.time() - start
         start = time.time(); quick_sort(data); quick_time = time.time() - start
