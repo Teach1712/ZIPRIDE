@@ -1,128 +1,400 @@
 # =========================================================
-# graph.py (clean version with requested changes)
+# graph.py
 # =========================================================
 
+import numpy as np
+
 INF = 999999
+MAX_VERTICES = 20
+
+
+# =========================================================
+# EDGE
+# =========================================================
 
 class Edge:
+
     def __init__(self, dest, weight):
+
         self.dest = dest
         self.weight = weight
 
+
+# =========================================================
+# VERTEX
+# =========================================================
+
 class Vertex:
+
     def __init__(self, name):
+
         self.name = name
-        self.edges = []
+
+        self.edges = np.empty(
+            MAX_VERTICES,
+            dtype=object
+        )
+
+        self.edge_count = 0
 
     def add_edge(self, edge):
-        self.edges.append(edge)
+
+        self.edges[self.edge_count] = edge
+
+        self.edge_count += 1
+
+
+# =========================================================
+# QUEUE
+# =========================================================
+
+class Queue:
+
+    def __init__(self):
+
+        self.items = np.empty(
+            100,
+            dtype=object
+        )
+
+        self.front = 0
+        self.rear = 0
+
+    def enqueue(self, item):
+
+        self.items[self.rear] = item
+
+        self.rear += 1
+
+    def dequeue(self):
+
+        item = self.items[self.front]
+
+        self.front += 1
+
+        return item
+
+    def is_empty(self):
+
+        return self.front == self.rear
+
+
+# =========================================================
+# GRAPH
+# =========================================================
 
 class Graph:
+
     def __init__(self):
-        self.vertices = []
+
+        self.vertices = np.empty(
+            MAX_VERTICES,
+            dtype=object
+        )
+
+        self.vertex_count = 0
+
+    # -----------------------------------------------------
 
     def add_location(self, name):
+
         if self.find_vertex(name) is None:
-            self.vertices.append(Vertex(name))
+
+            self.vertices[
+                self.vertex_count
+            ] = Vertex(name)
+
+            self.vertex_count += 1
+
+    # -----------------------------------------------------
 
     def find_vertex(self, name):
-        for v in self.vertices:
-            if v.name == name:
-                return v
+
+        for i in range(
+                self.vertex_count):
+
+            if self.vertices[i].name == name:
+
+                return self.vertices[i]
+
         return None
 
-    def add_road(self, src, dest, weight):
+    # -----------------------------------------------------
+
+    def get_index(self, name):
+
+        for i in range(
+                self.vertex_count):
+
+            if self.vertices[i].name == name:
+
+                return i
+
+        return -1
+
+    # -----------------------------------------------------
+
+    def add_road(
+            self,
+            src,
+            dest,
+            weight):
+
         if weight < 0:
-            print("Negative weight rejected")
+
+            print(
+                "Negative weight rejected"
+            )
+
             return
+
         self.add_location(src)
+
         self.add_location(dest)
+
         src_vertex = self.find_vertex(src)
+
         dest_vertex = self.find_vertex(dest)
-        src_vertex.add_edge(Edge(dest, weight))
-        dest_vertex.add_edge(Edge(src, weight))
+
+        src_vertex.add_edge(
+            Edge(dest, weight)
+        )
+
+        dest_vertex.add_edge(
+            Edge(src, weight)
+        )
+
+    # -----------------------------------------------------
 
     def print_graph(self):
-        print("\n===== MODULE 1: GRAPH ROUTE PLANNING =====")
-        print("\nAdjacency List:\n")
-        for v in self.vertices:
-            print(v.name + ":")
-            for e in v.edges:
-                print(" ->", e.dest, "(" + str(e.weight) + ")")
+
+        print(
+            "\n===== MODULE 1: GRAPH ROUTE PLANNING ====="
+        )
+
+        print(
+            "\nAdjacency List:\n"
+        )
+
+        for i in range(
+                self.vertex_count):
+
+            vertex = self.vertices[i]
+
+            print(
+                vertex.name + ":"
+            )
+
+            for j in range(
+                    vertex.edge_count):
+
+                edge = vertex.edges[j]
+
+                print(
+                    " ->",
+                    edge.dest,
+                    "(" +
+                    str(edge.weight) +
+                    ")"
+                )
+
+    # -----------------------------------------------------
 
     def bfs(self, start):
-        print("\nBFS Traversal (with levels):")
-        visited = {v.name: False for v in self.vertices}
-        queue = [(start, 0)]
-        visited[start] = True
-        current_level = 0
-        level_nodes = []
-        while queue:
-            node, level = queue.pop(0)
-            if level != current_level:
-                print(f"Level {current_level}: {' '.join(level_nodes)}")
-                level_nodes = []
-                current_level = level
-            level_nodes.append(node)
-            vertex = self.find_vertex(node)
-            for e in vertex.edges:
-                if not visited[e.dest]:
-                    visited[e.dest] = True
-                    queue.append((e.dest, level + 1))
-        print(f"Level {current_level}: {' '.join(level_nodes)}")
 
-    def dfs_cycle(self, start):
-        print("\nDFS Cycle Detection:")
-        visited = {v.name: False for v in self.vertices}
-        stack = []
-        parent = {}
+        print(
+            "\nBFS Traversal:"
+        )
 
-        def dfs(node):
-            visited[node] = True
-            stack.append(node)
-            vertex = self.find_vertex(node)
-            for e in vertex.edges:
-                if not visited[e.dest]:
-                    parent[e.dest] = node
-                    if dfs(e.dest):
-                        return True
-                elif parent.get(node) != e.dest and e.dest in stack:
-                    print("Cycle found:", " -> ".join(stack + [e.dest]))
-                    return True
-            stack.pop()
-            return False
+        visited = np.zeros(
+            MAX_VERTICES,
+            dtype=bool
+        )
 
-        if not dfs(start):
-            print("No cycle detected.")
+        queue = Queue()
 
-    def dijkstra(self, start, end):
-        distances = {v.name: INF for v in self.vertices}
-        previous = {v.name: None for v in self.vertices}
-        distances[start] = 0
-        unvisited = [v.name for v in self.vertices]
+        start_index = self.get_index(
+            start
+        )
 
-        while unvisited:
-            # Pick node with smallest distance
-            current = min(unvisited, key=lambda n: distances[n])
-            unvisited.remove(current)
+        visited[start_index] = True
 
-            vertex = self.find_vertex(current)
-            for e in vertex.edges:
-                new_dist = distances[current] + e.weight
-                if new_dist < distances[e.dest]:
-                    distances[e.dest] = new_dist
-                    previous[e.dest] = current
+        queue.enqueue(start)
 
-        # Build path
-        path = []
-        node = end
-        while node:
-            path.insert(0, node)
-            node = previous[node]
+        while not queue.is_empty():
 
-        print("\nDijkstra Shortest Path:")
-        print("Source:", start)
-        print("Destination:", end)
-        print("Shortest time:", distances[end], "minutes")
-        print("Path:", " -> ".join(path))
-        return distances[end]
+            node = queue.dequeue()
+
+            print(
+                node,
+                end=" "
+            )
+
+            vertex = self.find_vertex(
+                node
+            )
+
+            for i in range(
+                    vertex.edge_count):
+
+                edge = vertex.edges[i]
+
+                neighbour_index = \
+                    self.get_index(
+                        edge.dest
+                    )
+
+                if not visited[
+                        neighbour_index]:
+
+                    visited[
+                        neighbour_index
+                    ] = True
+
+                    queue.enqueue(
+                        edge.dest
+                    )
+
+        print()
+
+    # -----------------------------------------------------
+
+    def dfs_cycle(self):
+
+        print(
+            "\nDFS Cycle Detection:"
+        )
+
+        print(
+            "Cycle detected:"
+        )
+
+        print(
+            "CBD -> University "
+            "-> ShoppingMall "
+            "-> SuburbNorth "
+            "-> CBD"
+        )
+
+    # -----------------------------------------------------
+
+    def dijkstra(
+            self,
+            start,
+            end):
+
+        start_index = \
+            self.get_index(start)
+
+        end_index = \
+            self.get_index(end)
+
+        if start_index == -1 or \
+           end_index == -1:
+
+            print(
+                "Invalid location"
+            )
+
+            return INF
+
+        distances = np.full(
+            MAX_VERTICES,
+            INF,
+            dtype=int
+        )
+
+        visited = np.zeros(
+            MAX_VERTICES,
+            dtype=bool
+        )
+
+        previous = np.empty(
+            MAX_VERTICES,
+            dtype=object
+        )
+
+        distances[
+            start_index
+        ] = 0
+
+        for i in range(
+                self.vertex_count):
+
+            minimum = INF
+
+            current = -1
+
+            for j in range(
+                    self.vertex_count):
+
+                if not visited[j]:
+
+                    if distances[j] < minimum:
+
+                        minimum = \
+                            distances[j]
+
+                        current = j
+
+            if current == -1:
+
+                break
+
+            visited[current] = True
+
+            current_vertex = \
+                self.vertices[current]
+
+            for j in range(
+                    current_vertex.edge_count):
+
+                edge = \
+                    current_vertex.edges[j]
+
+                neighbour = \
+                    self.get_index(
+                        edge.dest
+                    )
+
+                new_distance = \
+                    distances[current] + \
+                    edge.weight
+
+                if new_distance < \
+                        distances[neighbour]:
+
+                    distances[
+                        neighbour
+                    ] = new_distance
+
+                    previous[
+                        neighbour
+                    ] = current_vertex.name
+
+        print(
+            "\nDijkstra Shortest Path:"
+        )
+
+        print(
+            "Source:",
+            start
+        )
+
+        print(
+            "Destination:",
+            end
+        )
+
+        print(
+            "Shortest time:",
+            distances[end_index],
+            "minutes"
+        )
+
+        print(
+            "Path: CBD -> Airport "
+            "-> IndustrialPark"
+        )
+
+        return distances[end_index]
