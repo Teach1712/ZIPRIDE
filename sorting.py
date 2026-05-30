@@ -1,100 +1,365 @@
 # =========================================================
-# sorting.py (fixed)
+# sorting.py
 # =========================================================
 
 import numpy as np
 import time
 
-# Global counters
-merge_ops = 0
-quick_ops = 0
+MERGE_OPS = 0
+QUICK_OPS = 0
 
-def merge_sort(arr):
-    global merge_ops
-    if len(arr) <= 1:
+
+# =========================================================
+# MERGE SORT
+# =========================================================
+
+def merge_sort(arr, size):
+
+    if size <= 1:
+
         return arr
-    mid = len(arr) // 2
-    left = merge_sort(arr[:mid])
-    right = merge_sort(arr[mid:])
-    return merge(left, right)
 
-def merge(left, right):
-    global merge_ops
-    result = []
-    i = j = 0
-    while i < len(left) and j < len(right):
-        merge_ops += 1  # comparison
+    mid = size // 2
+
+    left = np.empty(
+        mid,
+        dtype=int
+    )
+
+    right = np.empty(
+        size - mid,
+        dtype=int
+    )
+
+    for i in range(mid):
+
+        left[i] = arr[i]
+
+    for i in range(
+            mid,
+            size):
+
+        right[i - mid] = arr[i]
+
+    left = merge_sort(
+        left,
+        mid
+    )
+
+    right = merge_sort(
+        right,
+        size - mid
+    )
+
+    return merge(
+        left,
+        mid,
+        right,
+        size - mid
+    )
+
+
+# =========================================================
+# MERGE
+# =========================================================
+
+def merge(
+        left,
+        left_size,
+        right,
+        right_size):
+
+    global MERGE_OPS
+
+    result = np.empty(
+        left_size +
+        right_size,
+        dtype=int
+    )
+
+    i = 0
+    j = 0
+    k = 0
+
+    while i < left_size and \
+          j < right_size:
+
+        MERGE_OPS += 1
+
         if left[i] <= right[j]:
-            result.append(left[i])
+
+            result[k] = left[i]
+
             i += 1
+
         else:
-            result.append(right[j])
+
+            result[k] = right[j]
+
             j += 1
-    result.extend(left[i:])
-    result.extend(right[j:])
+
+        k += 1
+
+    while i < left_size:
+
+        result[k] = left[i]
+
+        i += 1
+        k += 1
+
+    while j < right_size:
+
+        result[k] = right[j]
+
+        j += 1
+        k += 1
+
     return result
 
-def quick_sort(arr):
-    global quick_ops
-    if len(arr) <= 1:
-        return arr
-    pivot = arr[len(arr) // 2]
-    left, middle, right = [], [], []
-    for x in arr:
-        quick_ops += 1  # comparison
-        if x < pivot:
-            left.append(x)
-        elif x == pivot:
-            middle.append(x)
-        else:
-            right.append(x)
-    return quick_sort(left) + middle + quick_sort(right)
+
+# =========================================================
+# QUICK SORT
+# =========================================================
+
+def quick_sort(
+        arr,
+        low,
+        high):
+
+    if low < high:
+
+        pivot = partition(
+            arr,
+            low,
+            high
+        )
+
+        quick_sort(
+            arr,
+            low,
+            pivot - 1
+        )
+
+        quick_sort(
+            arr,
+            pivot + 1,
+            high
+        )
+
+
+# =========================================================
+# PARTITION
+# =========================================================
+
+def partition(
+        arr,
+        low,
+        high):
+
+    global QUICK_OPS
+
+    pivot = arr[high]
+
+    i = low - 1
+
+    for j in range(
+            low,
+            high):
+
+        QUICK_OPS += 1
+
+        if arr[j] <= pivot:
+
+            i += 1
+
+            temp = arr[i]
+            arr[i] = arr[j]
+            arr[j] = temp
+
+    temp = arr[i + 1]
+    arr[i + 1] = arr[high]
+    arr[high] = temp
+
+    return i + 1
+
+
+# =========================================================
+# PRINT ARRAY
+# =========================================================
+
+def print_array(
+        arr,
+        size):
+
+    for i in range(size):
+
+        print(
+            arr[i],
+            end=" "
+        )
+
+    print()
+
+
+# =========================================================
+# BENCHMARK
+# =========================================================
 
 def benchmark():
-    np.random.seed(42)  # reproducible datasets
 
-    print("\n===== MODULE 4: SORTING PICKUP RECORDS =====")
-    print("\nSorting Field: EstimatedPickupTime T ascending")
+    global MERGE_OPS
+    global QUICK_OPS
 
+    print(
+        "\n===== MODULE 4: "
+        "SORTING PICKUP RECORDS ====="
+    )
+
+    print(
+        "\nSorting Field:"
+        " EstimatedPickupTime"
+    )
+
+    # ------------------------------------
     # Correctness Test
-    values = [45, 12, 78, 23, 9]
-    print("\nCorrectness Test:")
-    print("Original T values:", values)
-    global merge_ops, quick_ops
-    merge_ops = quick_ops = 0
-    merge_result = merge_sort(values)
-    quick_result = quick_sort(values)
-    print("Merge sort result:", merge_result)
-    print("Quick sort result:", quick_result)
-    print("Merge ops:", merge_ops, "Quick ops:", quick_ops)
-    print("Correctness check:", "PASSED" if merge_result == quick_result else "FAILED")
+    # ------------------------------------
 
-    sizes = [100, 500, 1000]
-    for size in sizes:
-        print("\nDataset Size:", size)
-        print("Condition | Merge Sort Time | Quick Sort Time | Merge Ops | Quick Ops")
+    values = np.array(
+        [45, 12, 78, 23, 9],
+        dtype=int
+    )
 
-        # Random
-        data = np.random.randint(1, 1000, size).tolist()
-        merge_ops = quick_ops = 0
-        start = time.time(); merge_sort(data); merge_time = time.time() - start
-        start = time.time(); quick_sort(data); quick_time = time.time() - start
-        print("Random   |", round(merge_time, 6), "|", round(quick_time, 6), "|", merge_ops, "|", quick_ops)
+    print(
+        "\nCorrectness Test:"
+    )
 
-        # Nearly Sorted
-        data = list(range(size))
-        if size > 10:
-            data[5], data[6] = data[6], data[5]  # small disorder
-        merge_ops = quick_ops = 0
-        start = time.time(); merge_sort(data); merge_time = time.time() - start
-        start = time.time(); quick_sort(data); quick_time = time.time() - start
-        print("NearlySorted |", round(merge_time, 6), "|", round(quick_time, 6), "|", merge_ops, "|", quick_ops)
+    print(
+        "Original:"
+    )
 
-        # Reversed
-        data = list(range(size, 0, -1))
-        merge_ops = quick_ops = 0
-        start = time.time(); merge_sort(data); merge_time = time.time() - start
-        start = time.time(); quick_sort(data); quick_time = time.time() - start
-        print("Reversed |", round(merge_time, 6), "|", round(quick_time, 6), "|", merge_ops, "|", quick_ops)
+    print_array(
+        values,
+        5
+    )
 
-    print("\n===== SORTING MODULE COMPLETE =====")
+    MERGE_OPS = 0
+    QUICK_OPS = 0
+
+    merge_result = merge_sort(
+        values.copy(),
+        5
+    )
+
+    quick_result = values.copy()
+
+    quick_sort(
+        quick_result,
+        0,
+        4
+    )
+
+    print(
+        "\nMerge Sort:"
+    )
+
+    print_array(
+        merge_result,
+        5
+    )
+
+    print(
+        "Quick Sort:"
+    )
+
+    print_array(
+        quick_result,
+        5
+    )
+
+    print(
+        "Merge Ops:",
+        MERGE_OPS
+    )
+
+    print(
+        "Quick Ops:",
+        QUICK_OPS
+    )
+
+    # ------------------------------------
+    # Dataset Testing
+    # ------------------------------------
+
+    sizes = np.array(
+        [100, 500, 1000],
+        dtype=int
+    )
+
+    for s in range(3):
+
+        size = sizes[s]
+
+        print(
+            "\nDataset Size:",
+            size
+        )
+
+        # Random Data
+
+        data = np.random.randint(
+            1,
+            1000,
+            size
+        )
+
+        MERGE_OPS = 0
+        QUICK_OPS = 0
+
+        start = time.time()
+
+        merge_sort(
+            data.copy(),
+            size
+        )
+
+        merge_time = \
+            time.time() - start
+
+        quick_data = data.copy()
+
+        start = time.time()
+
+        quick_sort(
+            quick_data,
+            0,
+            size - 1
+        )
+
+        quick_time = \
+            time.time() - start
+
+        print(
+            "Random:",
+            round(
+                merge_time,
+                6
+            ),
+            round(
+                quick_time,
+                6
+            )
+        )
+
+        print(
+            "Merge Ops:",
+            MERGE_OPS
+        )
+
+        print(
+            "Quick Ops:",
+            QUICK_OPS
+        )
+
+    print(
+        "\n===== SORTING MODULE COMPLETE ====="
+    )
