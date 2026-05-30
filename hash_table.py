@@ -1,157 +1,541 @@
+# =========================================================
+# hash_table.py
+# =========================================================
+# Author: Richa
+# Description:
+# Module 2 - Hash Based Passenger and Driver Lookup
+# Uses:
+# - Chaining with Linked Lists
+# - Modulo Hash Function
+# - NumPy Arrays instead of Python Lists
+# - No dict, hashmap, tuples, heapq, sort, index, find
+# =========================================================
+
 import numpy as np
+
 TABLE_SIZE = 53
 
+
+# =========================================================
+# PASSENGER CLASS
+# =========================================================
+
 class Passenger:
-    def __init__(self, passenger_id, name, pickup_location, membership_tier):
+
+    def __init__(
+            self,
+            passenger_id,
+            name,
+            pickup_location,
+            membership_tier):
+
         self.passenger_id = passenger_id
         self.name = name
         self.pickup_location = pickup_location
         self.membership_tier = membership_tier
 
+
+# =========================================================
+# DRIVER CLASS
+# =========================================================
+
 class Driver:
-    def __init__(self, driver_id, name, current_location, availability_status):
+
+    def __init__(
+            self,
+            driver_id,
+            name,
+            current_location,
+            availability_status):
+
         self.driver_id = driver_id
         self.name = name
         self.current_location = current_location
         self.availability_status = availability_status
 
+
+# =========================================================
+# LINKED LIST NODE
+# =========================================================
+
 class Node:
-    def __init__(self, key, data):
+
+    def __init__(
+            self,
+            key,
+            data):
+
         self.key = key
         self.data = data
         self.next = None
 
+
+# =========================================================
+# PASSENGER HASH TABLE
+# =========================================================
+
 class PassengerHashTable:
+
     def __init__(self):
+
         self.size = TABLE_SIZE
-        self.table = [None] * TABLE_SIZE
+
+        self.table = np.empty(
+            TABLE_SIZE,
+            dtype=object
+        )
+
+        for i in range(TABLE_SIZE):
+
+            self.table[i] = None
+
         self.count = 0
 
+    # -----------------------------------------------------
+
     def hash_function(self, key):
+
         return key % self.size
+
+    # -----------------------------------------------------
 
     def insert(self, passenger):
-        if passenger.membership_tier < 1 or passenger.membership_tier > 5:
-            print("Invalid membership tier: REJECTED")
-            return
-        if passenger.name == "":
-            print("Empty passenger name: REJECTED")
+
+        if not isinstance(
+                passenger.passenger_id,
+                int):
+
+            print(
+                "Passenger ID must be integer"
+            )
             return
 
-        index = self.hash_function(passenger.passenger_id)
+        if passenger.membership_tier < 1 or \
+           passenger.membership_tier > 5:
+
+            print(
+                "Invalid membership tier: REJECTED"
+            )
+            return
+
+        if passenger.name == "":
+
+            print(
+                "Empty passenger name: REJECTED"
+            )
+            return
+
+        index = self.hash_function(
+            passenger.passenger_id
+        )
+
         current = self.table[index]
 
         while current is not None:
-            if current.key == passenger.passenger_id:
-                print("Duplicate passenger ID: REJECTED")
+
+            if current.key == \
+                    passenger.passenger_id:
+
+                print(
+                    "Duplicate passenger ID: REJECTED"
+                )
                 return
+
             current = current.next
 
-        node = Node(passenger.passenger_id, passenger)
-        node.next = self.table[index]
-        self.table[index] = node
+        new_node = Node(
+            passenger.passenger_id,
+            passenger
+        )
+
+        new_node.next = self.table[index]
+
+        self.table[index] = new_node
+
         self.count += 1
 
-        # Print collision state
-        if node.next is not None:
-            print(f"Collision detected at bucket {index}! Chain updated.")
+        if new_node.next is not None:
 
-        # Print load factor every 10 inserts
+            print(
+                "Collision detected at bucket",
+                index
+            )
+
         if self.count % 10 == 0:
-            print(f"Load factor after {self.count} inserts: {self.load_factor():.2f}")
+
+            print(
+                "Load factor after",
+                self.count,
+                "inserts:",
+                round(
+                    self.load_factor(),
+                    2
+                )
+            )
+
+    # -----------------------------------------------------
 
     def search(self, passenger_id):
-        index = self.hash_function(passenger_id)
+
+        index = self.hash_function(
+            passenger_id
+        )
+
         current = self.table[index]
+
         while current is not None:
+
             if current.key == passenger_id:
-                print(f"Search hit: Passenger {passenger_id} FOUND")
+
+                print(
+                    "Search Passenger",
+                    passenger_id,
+                    ": FOUND"
+                )
+
                 return current.data
+
             current = current.next
-        print(f"Search miss: Passenger {passenger_id} NOT FOUND")
+
+        print(
+            "Search Passenger",
+            passenger_id,
+            ": NOT FOUND"
+        )
+
         return None
+
+    # -----------------------------------------------------
 
     def delete(self, passenger_id):
-        index = self.hash_function(passenger_id)
+
+        index = self.hash_function(
+            passenger_id
+        )
+
         current = self.table[index]
+
         previous = None
+
         while current is not None:
+
             if current.key == passenger_id:
+
                 if previous is None:
-                    self.table[index] = current.next
+
+                    self.table[index] = \
+                        current.next
+
                 else:
-                    previous.next = current.next
+
+                    previous.next = \
+                        current.next
+
                 self.count -= 1
-                print(f"Delete Passenger {passenger_id}: SUCCESS")
+
+                print(
+                    "Delete Passenger",
+                    passenger_id,
+                    ": SUCCESS"
+                )
+
                 return
+
             previous = current
             current = current.next
-        print(f"Delete Passenger {passenger_id}: KEY NOT FOUND")
+
+        print(
+            "Delete Passenger",
+            passenger_id,
+            ": KEY NOT FOUND"
+        )
+
+    # -----------------------------------------------------
 
     def load_factor(self):
+
         return self.count / self.size
+
+    # -----------------------------------------------------
 
     def print_chain(self, index):
-        """Utility to print chain state at a bucket"""
+
         current = self.table[index]
-        chain = []
-        while current:
-            chain.append(str(current.key))
+
+        print(
+            "Bucket",
+            index,
+            "Chain:"
+        )
+
+        while current is not None:
+
+            print(
+                current.key,
+                end=""
+            )
+
+            if current.next is not None:
+
+                print(
+                    " -> ",
+                    end=""
+                )
+
             current = current.next
-        print(f"Bucket {index} chain: {' -> '.join(chain) if chain else 'Empty'}")
+
+        print()
+
+    # -----------------------------------------------------
+
+    def display(self):
+
+        print(
+            "\n===== PASSENGER HASH TABLE ====="
+        )
+
+        for i in range(self.size):
+
+            if self.table[i] is not None:
+
+                print(
+                    "Bucket",
+                    i,
+                    ":",
+                    end=" "
+                )
+
+                current = self.table[i]
+
+                while current is not None:
+
+                    print(
+                        current.key,
+                        end=" "
+                    )
+
+                    current = current.next
+
+                print()
+
+
+# =========================================================
+# DRIVER HASH TABLE
+# =========================================================
 
 class DriverHashTable:
+
     def __init__(self):
+
         self.size = TABLE_SIZE
-        self.table = [None] * TABLE_SIZE
+
+        self.table = np.empty(
+            TABLE_SIZE,
+            dtype=object
+        )
+
+        for i in range(TABLE_SIZE):
+
+            self.table[i] = None
+
         self.count = 0
+
+    # -----------------------------------------------------
+
     def hash_function(self, key):
+
         return key % self.size
+
+    # -----------------------------------------------------
+
     def insert(self, driver):
-        valid_status = ["Available", "Busy", "Offline"]
-        if driver.availability_status not in valid_status:
-            print("Invalid driver status: REJECTED")
+
+        if not isinstance(
+                driver.driver_id,
+                int):
+
+            print(
+                "Driver ID must be integer"
+            )
             return
-        index = self.hash_function(driver.driver_id)
+
+        if driver.name == "":
+
+            print(
+                "Empty driver name: REJECTED"
+            )
+            return
+
+        if driver.availability_status != \
+                "Available" and \
+           driver.availability_status != \
+                "Busy" and \
+           driver.availability_status != \
+                "Offline":
+
+            print(
+                "Invalid driver status: REJECTED"
+            )
+            return
+
+        index = self.hash_function(
+            driver.driver_id
+        )
+
         current = self.table[index]
+
         while current is not None:
+
             if current.key == driver.driver_id:
-                print("Duplicate driver ID: REJECTED")
+
+                print(
+                    "Duplicate driver ID: REJECTED"
+                )
                 return
+
             current = current.next
-        node = Node(driver.driver_id, driver)
-        node.next = self.table[index]
-        self.table[index] = node
+
+        new_node = Node(
+            driver.driver_id,
+            driver
+        )
+
+        new_node.next = self.table[index]
+
+        self.table[index] = new_node
+
         self.count += 1
-        if node.next is not None:
-            print(f"Collision detected at bucket {index}! Chain updated.")
+
+        if new_node.next is not None:
+
+            print(
+                "Collision detected at bucket",
+                index
+            )
+
         if self.count % 10 == 0:
-            print(f"Load factor after {self.count} inserts: {self.load_factor():.2f}")
+
+            print(
+                "Load factor after",
+                self.count,
+                "inserts:",
+                round(
+                    self.load_factor(),
+                    2
+                )
+            )
+
+    # -----------------------------------------------------
+
     def search(self, driver_id):
-        index = self.hash_function(driver_id)
+
+        index = self.hash_function(
+            driver_id
+        )
+
         current = self.table[index]
+
         while current is not None:
+
             if current.key == driver_id:
-                print(f"Search hit: Driver {driver_id} FOUND")
+
+                print(
+                    "Search Driver",
+                    driver_id,
+                    ": FOUND"
+                )
+
                 return current.data
+
             current = current.next
-        print(f"Search miss: Driver {driver_id} NOT FOUND")
+
+        print(
+            "Search Driver",
+            driver_id,
+            ": NOT FOUND"
+        )
+
         return None
+
+    # -----------------------------------------------------
+
     def delete(self, driver_id):
-        index = self.hash_function(driver_id)
+
+        index = self.hash_function(
+            driver_id
+        )
+
         current = self.table[index]
+
         previous = None
+
         while current is not None:
+
             if current.key == driver_id:
+
                 if previous is None:
-                    self.table[index] = current.next
+
+                    self.table[index] = \
+                        current.next
+
                 else:
-                    previous.next = current.next
+
+                    previous.next = \
+                        current.next
+
                 self.count -= 1
-                print(f"Delete Driver {driver_id}: SUCCESS")
+
+                print(
+                    "Delete Driver",
+                    driver_id,
+                    ": SUCCESS"
+                )
+
                 return
+
             previous = current
             current = current.next
-        print(f"Delete Driver {driver_id}: KEY NOT FOUND")
+
+        print(
+            "Delete Driver",
+            driver_id,
+            ": KEY NOT FOUND"
+        )
+
+    # -----------------------------------------------------
+
     def load_factor(self):
+
         return self.count / self.size
+
+    # -----------------------------------------------------
+
+    def display(self):
+
+        print(
+            "\n===== DRIVER HASH TABLE ====="
+        )
+
+        for i in range(self.size):
+
+            if self.table[i] is not None:
+
+                print(
+                    "Bucket",
+                    i,
+                    ":",
+                    end=" "
+                )
+
+                current = self.table[i]
+
+                while current is not None:
+
+                    print(
+                        current.key,
+                        end=" "
+                    )
+
+                    current = current.next
+
+                print()
